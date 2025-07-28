@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Smart Tools by Swapan Baroi</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #83a4d4, #b6fbff);
+      margin: 0;
+      padding: 0;
+      transition: background 0.5s, color 0.5s;
+    }
+    body.dark {
+      background: #1e1e1e;
+      color: #eee;
+    }
+    header {
+      background-color: #004d7a;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+      font-size: 1.5rem;
+    }
+    nav {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      background-color: #006699;
+      padding: 10px;
+    }
+    nav button {
+      padding: 10px;
+      background: #00c6ff;
+      border: none;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      border-radius: 10px;
+    }
+    .section {
+      display: none;
+      padding: 20px;
+    }
+    .active {
+      display: block;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    input, button, select, textarea {
+      padding: 10px;
+      margin-top: 5px;
+      width: 100%;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+    img, canvas {
+      max-width: 100%;
+      margin-top: 10px;
+    }
+    footer {
+      text-align: center;
+      padding: 10px;
+      background-color: #004d7a;
+      color: white;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <header>📱 Smart Tools – by Swapan Baroi</header>
+  <nav>
+    <button onclick="showSection('resize')">📐 Resize</button>
+    <button onclick="showSection('age')">🎂 Age Calc</button>
+    <button onclick="showSection('pdf')">📷 Img to PDF</button>
+    <button onclick="showSection('compress')">🔄 Compress</button>
+    <button onclick="toggleDarkMode()">🌙 Dark Mode</button>
+  </nav>
+
+  <!-- Resize Section -->
+  <div class="section active" id="resize">
+    <h2>📐 Resize Image</h2>
+    <input type="file" id="resizeUpload" accept="image/*">
+    <label>Width:</label><input type="number" id="resizeW">
+    <label>Height:</label><input type="number" id="resizeH">
+    <button onclick="resizeImage()">Resize & Download</button>
+    <canvas id="resizeCanvas" style="display:none;"></canvas>
+  </div>
+
+  <!-- Age Calculator -->
+  <div class="section" id="age">
+    <h2>🎂 Age Calculator</h2>
+    <label>Date of Birth:</label>
+    <input type="date" id="dob">
+    <button onclick="calculateAge()">Calculate</button>
+    <div id="ageOutput"></div>
+  </div>
+
+  <!-- Image to PDF -->
+  <div class="section" id="pdf">
+    <h2>📷 Image to PDF</h2>
+    <input type="file" id="pdfUpload" accept="image/*" multiple>
+    <button onclick="generatePDF()">Convert & Download PDF</button>
+  </div>
+
+  <!-- Compress Image -->
+  <div class="section" id="compress">
+    <h2>🔄 Compress Image</h2>
+    <input type="file" id="compressUpload" accept="image/*">
+    <label>Target Size (KB):</label>
+    <input type="number" id="compressTarget" placeholder="e.g., 50">
+    <button onclick="compressImage()">Compress & Download</button>
+    <canvas id="compressCanvas" style="display:none;"></canvas>
+  </div>
+
+  <footer>Made with ❤️ by Swapan Baroi</footer>
+
+  <!-- JS Libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <!-- JS Functional Code -->
+  <script>
+    function showSection(id) {
+      document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+
+    function toggleDarkMode() {
+      document.body.classList.toggle('dark');
+    }
+
+    // Resize Image
+    function resizeImage() {
+      const file = document.getElementById('resizeUpload').files[0];
+      const width = parseInt(document.getElementById('resizeW').value);
+      const height = parseInt(document.getElementById('resizeH').value);
+      const canvas = document.getElementById('resizeCanvas');
+      const ctx = canvas.getContext('2d');
+
+      if (!file || !width || !height) {
+        alert("Please upload an image and set width & height.");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          canvas.width = width;
+          canvas.height = height;
+          ctx.drawImage(img, 0, 0, width, height);
+          const link = document.createElement('a');
+          link.download = 'resized-image.png';
+          link.href = canvas.toDataURL();
+          link.click();
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Age Calculator
+    function calculateAge() {
+      const dob = new Date(document.getElementById('dob').value);
+      const now = new Date();
+      if (!dob || isNaN(dob)) {
+        document.getElementById('ageOutput').innerText = "Please select a valid date.";
+        return;
+      }
+      let ageY = now.getFullYear() - dob.getFullYear();
+      let ageM = now.getMonth() - dob.getMonth();
+      let ageD = now.getDate() - dob.getDate();
+
+      if (ageD < 0) {
+        ageM--;
+        ageD += new Date(now.getFullYear(), now.getMonth(), 0).getDate();
+      }
+      if (ageM < 0) {
+        ageY--;
+        ageM += 12;
+      }
+
+      const ageHours = Math.floor((now - dob) / 1000 / 60 / 60);
+      const ageMinutes = Math.floor((now - dob) / 1000 / 60);
+      const ageSeconds = Math.floor((now - dob) / 1000);
+
+      document.getElementById('ageOutput').innerHTML = `
+        <p><strong>Years:</strong> ${ageY}, <strong>Months:</strong> ${ageM}, <strong>Days:</strong> ${ageD}</p>
+        <p><strong>Hours:</strong> ${ageHours}, <strong>Minutes:</strong> ${ageMinutes}, <strong>Seconds:</strong> ${ageSeconds}</p>`;
+    }
+
+    // Image to PDF
+    async function generatePDF() {
+      const files = document.getElementById('pdfUpload').files;
+      if (files.length === 0) return alert('Upload images first.');
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF();
+
+      for (let i = 0; i < files.length; i++) {
+        const img = new Image();
+        const reader = new FileReader();
+        await new Promise(resolve => {
+          reader.onload = function(e) {
+            img.onload = function() {
+              const width = pdf.internal.pageSize.getWidth();
+              const height = (img.height / img.width) * width;
+              if (i > 0) pdf.addPage();
+              pdf.addImage(img, 'JPEG', 0, 0, width, height);
+              resolve();
+            };
+            img.src = e.target.result;
+          };
+          reader.readAsDataURL(files[i]);
+        });
+      }
+
+      pdf.save("images.pdf");
+    }
+
+    // Compress Image
+    function compressImage() {
+      const file = document.getElementById('compressUpload').files[0];
+      const targetKB = parseInt(document.getElementById('compressTarget').value);
+      const canvas = document.getElementById('compressCanvas');
+      const ctx = canvas.getContext('2d');
+
+      if (!file || isNaN(targetKB)) {
+        alert("Please select image and target size.");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.drawImage(img, 0, 0);
+
+          let quality = 0.9;
+          let dataURL;
+          let sizeKB = 0;
+
+          do {
+            dataURL = canvas.toDataURL('image/jpeg', quality);
+            sizeKB = Math.round((dataURL.length * (3/4)) / 1024);
+            quality -= 0.05;
+          } while (sizeKB > targetKB && quality > 0.05);
+
+          const link = document.createElement('a');
+          link.href = dataURL;
+          link.download = 'compressed-image.jpg';
+          link.click();
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+  </script>
+</body>
+</html>
